@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Activity Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">GitHub Activity Analyzer</h1>
+            <p class="text-gray-600">GDGAAU Repository Analytics Dashboard</p>
+        </div>
+        
+        <div class="glass-morphism rounded-xl shadow-lg p-8 mb-8">
+            <form id="analyzeForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Repositories</label>
+                    <select id="repoNames" multiple 
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[200px]">
+                        <option value="Student_Career_-Advisor">Student Career Advisor</option>
+                        <option value="earthquake_web">Earthquake Web</option>
+                        <option value="student_budget_planner">Student Budget Planner</option>
+                        <option value="smart_queue">Smart Queue</option>
+                        <option value="learnhub">LearnHub</option>
+                        <option value="Library_Seat_Booking_System">Library Seat Booking System</option>
+                        <option value="lexora">Lexora</option>
+                        <option value="smart_risa">Smart RISA</option>
+                        <option value="Smart-event-planner">Smart Event Planner</option>
+                        <option value="AI-powered-Translator">AI-powered Translator</option>
+                        <option value="BloodNet">BloodNet</option>
+                        <option value="budget-planner">Budget Planner</option>
+                        <option value="earthquake-tracker">Earthquake Tracker</option>
+                        <option value="willow">Willow</option>
+                        <option value="peer-to-peer">Peer to Peer</option>
+                        <option value="UniSync">UniSync</option>
+                        <option value="AgriNexus">AgriNexus</option>
+                        <option value="Internship-Sphere">Internship Sphere</option>
+                        <option value="UniSpace-Tracker">UniSpace Tracker</option>
+                    </select>
+                    <p class="mt-2 text-sm text-gray-500">Hold Ctrl/Cmd to select multiple repositories</p>
+                </div>
+                <div class="flex justify-center">
+                    <button type="submit" id="submitBtn" 
+                        class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-8 py-3 rounded-lg hover:from-blue-600 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200 font-medium">
+                        Analyze Repositories
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div id="loading" class="hidden">
+            <div class="glass-morphism rounded-xl p-8 text-center">
+                <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <p class="text-gray-600">Analyzing repository activities...</p>
+            </div>
+        </div>
+
+        <div id="results" class="hidden space-y-8">
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        function createActivityChart(canvasId, data) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            return new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Commits', 'Issues', 'PRs', 'Stars', 'Forks'],
+                    datasets: [{
+                        label: 'Activity Metrics',
+                        data: [
+                            data.total_commits || 0,
+                            data.open_issues || 0,
+                            data.pull_requests || 0,
+                            data.stars || 0,
+                            data.forks || 0
+                        ],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(139, 92, 246, 0.7)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                display: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createCommitTrendChart(canvasId, data) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.commit_history?.map(h => h.date) || [],
+                    datasets: [{
+                        label: 'Commits',
+                        data: data.commit_history?.map(h => h.count) || [],
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        tension: 0.4,
+                        fill: true,
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Commit Activity Trend'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                display: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createContributorsChart(canvasId, data) {
+            const contributors = data.contributors || [];
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            return new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: contributors.slice(0, 5).map(c => c.login),
+                    datasets: [{
+                        data: contributors.slice(0, 5).map(c => c.commits),
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(139, 92, 246, 0.7)',
+                            'rgba(236, 72, 153, 0.7)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Top Contributors'
+                        }
+                    }
+                }
+            });
+        }
+
+        document.getElementById('analyzeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingDiv = document.getElementById('loading');
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('resultsContent');
+            
+            loadingDiv.classList.remove('hidden');
+            resultsDiv.classList.add('hidden');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50');
+
+            // Get selected repositories
+            const selectedRepos = Array.from(document.getElementById('repoNames').selectedOptions)
+                .map(option => option.value);
+
+            if (selectedRepos.length === 0) {
+                alert('Please select at least one repository');
+                loadingDiv.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/activity/?org_name=GDGAAU&repo_names=${selectedRepos.join(',')}`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Failed to fetch repository data');
+                }
+                
+                resultsContent.innerHTML = '';
+
+                if (data.detail) {
+                    resultsContent.innerHTML = `
+                        <div class="glass-morphism rounded-xl p-6 text-red-600">
+                            ${data.detail}
+                        </div>
+                    `;
+                } else {
+                    for (const repo of Object.keys(data)) {
+                        const repoData = data[repo];
+                        const repoDiv = document.createElement('div');
+                        repoDiv.className = 'glass-morphism rounded-xl p-8 mb-8';
+                        
+                        if (repoData.error) {
+                            repoDiv.innerHTML = `
+                                <div class="text-red-600">
+                                    <h3 class="text-xl font-semibold mb-2">${repo}</h3>
+                                    <p>${repoData.error}</p>
+                                </div>
+                            `;
+                        } else {
+                            const mainChartId = `chart-${repo.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                            const trendChartId = `trend-${repo.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                            const contributorsChartId = `contributors-${repo.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                            
+                            repoDiv.innerHTML = `
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-2xl font-bold text-gray-800">${repo}</h3>
+                                    <span class="text-sm text-gray-500">Last Updated: ${repoData.last_updated || 'N/A'}</span>
+                                </div>
+
+                                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                                    <div class="bg-white rounded-lg p-4 shadow-sm">
+                                        <h4 class="font-medium text-gray-700 mb-4">Overview</h4>
+                                        <canvas id="${mainChartId}"></canvas>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 shadow-sm">
+                                        <h4 class="font-medium text-gray-700 mb-4">Commit Trend</h4>
+                                        <canvas id="${trendChartId}"></canvas>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 shadow-sm">
+                                        <h4 class="font-medium text-gray-700 mb-4">Contributors</h4>
+                                        <canvas id="${contributorsChartId}"></canvas>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                    <div class="bg-white rounded-lg p-4 text-center">
+                                        <div class="text-2xl font-bold text-blue-600">${repoData.total_commits || 0}</div>
+                                        <div class="text-sm text-gray-600">Commits</div>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 text-center">
+                                        <div class="text-2xl font-bold text-red-600">${repoData.open_issues || 0}</div>
+                                        <div class="text-sm text-gray-600">Open Issues</div>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 text-center">
+                                        <div class="text-2xl font-bold text-green-600">${repoData.pull_requests || 0}</div>
+                                        <div class="text-sm text-gray-600">Pull Requests</div>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 text-center">
+                                        <div class="text-2xl font-bold text-yellow-600">${repoData.stars || 0}</div>
+                                        <div class="text-sm text-gray-600">Stars</div>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 text-center">
+                                        <div class="text-2xl font-bold text-purple-600">${repoData.forks || 0}</div>
+                                        <div class="text-sm text-gray-600">Forks</div>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 text-center">
+                                        <div class="text-2xl font-bold text-pink-600">${repoData.contributors?.length || 0}</div>
+                                        <div class="text-sm text-gray-600">Contributors</div>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            resultsContent.appendChild(repoDiv);
+                            createActivityChart(mainChartId, repoData);
+                            createCommitTrendChart(trendChartId, repoData);
+                            createContributorsChart(contributorsChartId, repoData);
+                        }
+                    }
+                }
+                
+                resultsDiv.classList.remove('hidden');
+            } catch (error) {
+                resultsContent.innerHTML = `
+                    <div class="glass-morphism rounded-xl p-6">
+                        <div class="text-red-600 font-medium">Error</div>
+                        <div class="mt-2 text-gray-700">${error.message}</div>
+                    </div>
+                `;
+                resultsDiv.classList.remove('hidden');
+            } finally {
+                loadingDiv.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50');
+            }
+        });
+    </script>
+</body>
+</html> 
