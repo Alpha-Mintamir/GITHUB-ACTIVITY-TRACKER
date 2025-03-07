@@ -12,9 +12,13 @@ A powerful web application that analyzes and visualizes GitHub repository activi
 - Rate limit handling
 - Beautiful glass-morphism UI design
 
+## Preview
+
+![Project Preview](https://res.cloudinary.com/dgckkacgl/image/upload/v1741353266/photo_2025-03-07_16-14-06_tqobgt.jpg)
+
 ## 🚀 Live Demo
 
-[Add your deployed application URL here]
+[Click Here](https://github-activity-tracker.onrender.com/)
 
 ## 🛠️ Tech Stack
 
