@@ -1,1 +1,10 @@
- 
+name: github-activity-analyzer
+services:
+- name: web
+  github:
+    repo: your-repo
+    branch: main
+  envs:
+  - key: GITHUB_TOKEN
+    scope: RUN_TIME
+    value: "" 
