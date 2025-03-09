@@ -37,7 +37,7 @@ A powerful web application that analyzes and visualizes GitHub repository activi
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/Alpha-Mintamir/github-activity-analyzer.git
+git clone https://github.com/GDGAAU/GITHUB-ACTIVITY-TRACKER
 cd github-activity-analyzer
 ```
 
